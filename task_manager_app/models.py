@@ -1,5 +1,5 @@
 from django.db import models
-
+#
 # Create your models here.
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -53,5 +53,10 @@ class SubTask(models.Model):
         verbose_name = "SubTask"
         unique_together = ("title",)
 
+
     def __str__(self):
         return f"{self.title} ({self.task.title})"
+
+
+
+

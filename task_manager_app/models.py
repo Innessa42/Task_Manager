@@ -47,6 +47,7 @@ class SubTask(models.Model):
     deadline = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+
     class Meta:
         db_table = "task_manager_subtask"
         ordering = ('-created_at',)

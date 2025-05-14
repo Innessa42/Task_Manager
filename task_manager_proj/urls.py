@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from task_manager_app.views import user_hallo, tasks_create, list_of_tasks, get_task_by_id, tasks_count, \
-    tasks_count_by_status, tasks_of_overdue
+    tasks_count_by_status, tasks_of_overdue, SubTaskListCreateAPIView, SubTaskDetailUpdateDeleteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,5 +28,7 @@ urlpatterns = [
     path('tasks/count', tasks_count),
     path('tasks/status_count', tasks_count_by_status),
     path('tasks/tasks_of_overdue', tasks_of_overdue),
+    path('subtasks/', SubTaskListCreateAPIView.as_view()),
+    path('subtasks/<int:subtask_id>', SubTaskDetailUpdateDeleteView.as_view()),
 
 ]

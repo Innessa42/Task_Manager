@@ -1,36 +1,105 @@
+from django.db.models.functions import ExtractWeekDay
+from rest_framework.exceptions import ValidationError
 from django.db.models.aggregates import Count
-from django.db.models import QuerySet
+from django.db.models import Count, QuerySet
+from django.db.models.functions import ExtractWeekDay
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.utils import timezone
+from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from rest_framework.request import  Request
+from rest_framework.request import Request
+from rest_framework.views import APIView
 
 from task_manager_app.models import Task, SubTask
 from task_manager_app.serializers import TaskCreateSerializer, TaskListSerialize, TaskStatusCountSerializer, \
-    SubTaskCreateSerializer, SubTaskSerializer
+    SubTaskCreateSerializer, SubTaskSerializer, TaskDetailSerializer
 from rest_framework import status
 from django.utils import timezone
 from rest_framework.views import APIView
+
+
+
+
+
 def user_hallo(request):
     return HttpResponse("Hello, World")
 
-@api_view(['POST'])
-def tasks_create(request: Request) -> Response:
-    serializer = TaskCreateSerializer(data=request.data)
 
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class TaskListCreateAPIView(APIView):
+     WEEKDAY_MAP = {
+         'воскресенье': 1,
+         'sunday': 1,
+         'понедельник': 2,
+         'monday': 2,
+         'вторник': 3,
+         'tuesday': 3,
+         'среда': 4,
+         'wednesday': 4,
+         'четверг': 5,
+         'thursday': 5,
+         'пятница': 6,
+         'friday': 6,
+         'суббота': 7,
+         'saturday': 7,
+     }
 
-@api_view(['GET'])
-def list_of_tasks(request) -> Response:
-    tasks = Task.objects.all()
-    serializer = TaskListSerialize(tasks, many=True)
+     def get_queryset(self, request: Request) -> QuerySet[Task]:
+         queryset: QuerySet[Task] = Task.objects.all()
+         day_of_week = request.query_params.get("weekday")
 
-    return Response(data=serializer.data, status=status.HTTP_200_OK)
+         if day_of_week:
+             if day_of_week not in self.WEEKDAY_MAP:
+                 raise ValidationError("Неверный день недели!")
+
+             weekday_num = self.WEEKDAY_MAP.get(day_of_week.lower())
+             queryset = queryset.annotate(weekday=ExtractWeekDay('deadline')).filter(weekday=weekday_num)
+
+         return queryset
+
+     def get(self, request: Request) -> Response:
+         tasks = self.get_queryset(request=request)
+         serializer = TaskListSerialize(tasks, many=True)
+
+         return Response(
+             data=serializer.data,
+             status=status.HTTP_200_OK
+         )
+
+     def post(self, request: Request) -> Response:
+         serializer = TaskCreateSerializer(data=request.data)
+
+         if serializer.is_valid():
+             serializer.save()
+             return Response(serializer.data, status=status.HTTP_201_CREATED)
+         else:
+             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+#@api_view(['POST'])
+#def tasks_create(request: Request) -> Response:
+#    serializer = TaskCreateSerializer(data=request.data)
+#
+#    if serializer.is_valid():
+#        serializer.save()
+#        return Response(serializer.data, status=status.HTTP_201_CREATED)
+#    else:
+#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#@api_view(['GET'])
+#def list_of_tasks(request) -> Response:
+#    tasks = Task.objects.all()
+#    serializer = TaskListSerialize(tasks, many=True)
+#
+#    return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 @api_view(['GET'])
 def get_task_by_id(request, task_id: int) -> Response:
@@ -70,23 +139,59 @@ def tasks_of_overdue(request) -> Response:
     return Response(data=f"{count_of_overdue_task=}", status=status.HTTP_200_OK)
 
 
-class SubTaskListCreateAPIView(APIView):
-    def get(self, request: Request) -> Response:
-        subtasks: QuerySet[SubTask] = SubTask.objects.all()
-        serializer = SubTaskSerializer(subtasks, many=True)
-        return Response(
-            data=serializer.data,
-            status=status.HTTP_200_OK
-        )
+
+class SubTaskListCreateAPIView(APIView, PageNumberPagination):
+     page_size = 2
+
+     def get_queryset(self, request: Request):
+
+         queryset: QuerySet[SubTask] = SubTask.objects.all()
+
+         tasks = request.query_params.getlist('task')
+         status = request.query_params.get('status')
+
+         if tasks:
+             queryset = queryset.filter(task__title__in=tasks)
+
+         if status:
+
+             valid_statuses = [choice[1] for choice in SubTask.STATUS_CHOICES]
+             if status in valid_statuses:
+
+                 queryset = queryset.filter(status=status)
+             else:
+
+                 queryset = queryset.none()
+
+         return queryset.order_by("-created_at")
+
+     def get_page_size(self, request):
+         page_size = request.query_params.get('page_size')
+
+         if page_size and page_size.isdigit():
+             return int(page_size)
+
+         return self.page_size
+
+     def get(self, request: Request) -> Response:
+         subtasks: QuerySet[SubTask] = self.get_queryset(request=request)
+         # subtasks: QuerySet[SubTask] = SubTask.objects.all().order_by("-created_at")
+         results = self.paginate_queryset(queryset=subtasks, request=request, view=self)
+         serializer = SubTaskSerializer(results, many=True)
+         # return Response(data=serializer.data, status=status.HTTP_200_OK)
+         return self.get_paginated_response(data=serializer.data)
+
+     def post(self, request: Request) -> Response:
+         serializer = SubTaskCreateSerializer(data=request.data)
+         if serializer.is_valid():
+             serializer.save()
+             return Response(serializer.data, status=status.HTTP_201_CREATED)
+         else:
+             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    def post(self, request: Request) -> Response:
-        serializer = SubTaskCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class SubTaskDetailUpdateDeleteView(APIView):
@@ -153,3 +258,24 @@ class SubTaskDetailUpdateDeleteView(APIView):
             },
             status=status.HTTP_202_ACCEPTED
         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

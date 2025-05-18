@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 
     'rest_framework',
+    'django_filters',
 
     'task_manager_app.apps.TaskManagerAppConfig',
 

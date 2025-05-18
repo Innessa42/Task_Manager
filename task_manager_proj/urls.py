@@ -16,20 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from task_manager_app.views import user_hallo, get_task_by_id, tasks_count, \
-    tasks_count_by_status, tasks_of_overdue, SubTaskListCreateAPIView, SubTaskDetailUpdateDeleteView, \
-    TaskListCreateAPIView
+from task_manager_app.views import user_hallo, tasks_count, \
+    tasks_count_by_status, tasks_of_overdue, SubTaskDetailUpdateDeleteView, \
+TaskListCreateView, TaskDetailUpdateDeleteView, SubTaskListCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("hallo/", user_hallo),
     #path("task/create/", tasks_create),
-    path("tasks/", TaskListCreateAPIView.as_view()),
-    path('tasks/<int:task_id>', get_task_by_id),
+    path("tasks/", TaskListCreateView.as_view()),
+    path('tasks/<int:task_id>', TaskDetailUpdateDeleteView.as_view()),
     path('tasks/count', tasks_count),
     path('tasks/status_count', tasks_count_by_status),
     path('tasks/tasks_of_overdue', tasks_of_overdue),
-    path('subtasks/', SubTaskListCreateAPIView.as_view()),
+    path('subtasks/', SubTaskListCreateView.as_view()),
     path('subtasks/<int:subtask_id>', SubTaskDetailUpdateDeleteView.as_view()),
 
 ]

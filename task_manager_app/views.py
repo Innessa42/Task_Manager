@@ -16,7 +16,7 @@ from task_manager_app.serializers import TaskCreateSerializer, TaskListSerialize
     SubTaskCreateSerializer, SubTaskSerializer, TaskDetailSerializer, CategoryCreateSerializer
 from rest_framework import status, filters
 from django.utils import timezone
-from rest_framework.views import APIView
+from rest_framework.permissions import  SAFE_METHODS, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -45,6 +45,7 @@ class TaskListCreateView(ListCreateAPIView):
     }
 
     queryset = Task.objects.all()
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     filter_backends = [
         DjangoFilterBackend,
@@ -77,6 +78,7 @@ class TaskListCreateView(ListCreateAPIView):
 class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     lookup_url_kwarg = 'task_id'
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
     def get_serializer_class(self):
@@ -199,6 +201,7 @@ def tasks_of_overdue(request) -> Response:
 
 class SubTaskListCreateView(ListCreateAPIView):
     queryset = SubTask.objects.all()
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     filter_backends = [
         DjangoFilterBackend,
@@ -269,6 +272,7 @@ class SubTaskListCreateView(ListCreateAPIView):
 class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     queryset = SubTask.objects.all()
     lookup_url_kwarg = 'subtask_id'
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
     def get_serializer_class(self):
@@ -345,6 +349,7 @@ class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategoryCreateSerializer
+    permission_classes = [IsAdminUser]
 
     @action(
         detail=False,

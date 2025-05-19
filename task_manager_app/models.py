@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 from managers.category import SoftDeleteManager
@@ -36,6 +37,16 @@ class Task(models.Model):
         ('Done', 'Done'),
     ]
 
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+
+
     title = models.CharField(max_length=100, unique_for_date='deadline')
     description = models.TextField()
     categories = models.ManyToManyField(Category)
@@ -54,6 +65,13 @@ class Task(models.Model):
 
 class SubTask(models.Model):
     STATUS_CHOICES = Task.STATUS_CHOICES
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
 
     title = models.CharField(max_length=100)

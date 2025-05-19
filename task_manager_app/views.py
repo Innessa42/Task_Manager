@@ -19,11 +19,29 @@ from django.utils import timezone
 from rest_framework.permissions import  SAFE_METHODS, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from django_filters.rest_framework import DjangoFilterBackend
-
+from task_manager_app.permissions.owner_permissions import IsOwnerOrReadOnly
 
 
 def user_hallo(request):
     return HttpResponse("Hello, World")
+
+class UserSubTasksListGenericView(ListAPIView):
+    serializer_class = SubTaskSerializer
+
+    def get_queryset(self):
+        return SubTask.objects.filter(
+            owner=self.request.user
+        )
+
+
+class UserTasksListGenericView(ListAPIView):
+    serializer_class =  TaskListSerialize
+
+    def get_queryset(self):
+        return Task.objects.filter(
+            owner=self.request.user
+        )
+
 
 
 class TaskListCreateView(ListCreateAPIView):
@@ -75,10 +93,13 @@ class TaskListCreateView(ListCreateAPIView):
 
         return queryset
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     lookup_url_kwarg = 'task_id'
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly]
 
 
     def get_serializer_class(self):
@@ -213,10 +234,15 @@ class SubTaskListCreateView(ListCreateAPIView):
     search_fields = ['title', 'description']
     ordering_fields = ['created_at']
 
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return SubTaskSerializer
         return SubTaskCreateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 #class SubTaskListCreateAPIView(APIView, PageNumberPagination):
 #     page_size = 2
@@ -272,13 +298,15 @@ class SubTaskListCreateView(ListCreateAPIView):
 class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     queryset = SubTask.objects.all()
     lookup_url_kwarg = 'subtask_id'
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly]
 
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return SubTaskSerializer
         return SubTaskCreateSerializer
+
+
 
 
 #class SubTaskDetailUpdateDeleteView(APIView):

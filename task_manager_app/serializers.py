@@ -10,6 +10,7 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'status',
+            "owner",
             'deadline',
             'categories',
         ]
@@ -37,6 +38,7 @@ class SubTaskCreateSerializer(serializers.ModelSerializer):
                   "description",
                   "task",
                   "status",
+                  "owner",
                   "deadline",
                   "created_at"]
 

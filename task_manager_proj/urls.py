@@ -15,10 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from task_manager_app.views import user_hallo, tasks_count, \
     tasks_count_by_status, tasks_of_overdue, SubTaskDetailUpdateDeleteView, \
-TaskListCreateView, TaskDetailUpdateDeleteView, SubTaskListCreateView
+    TaskListCreateView, TaskDetailUpdateDeleteView, SubTaskListCreateView, CategoryViewSet
+from rest_framework.routers import DefaultRouter
+
+
+
+router = DefaultRouter()
+router.register('categories', CategoryViewSet)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,5 +38,6 @@ urlpatterns = [
     path('tasks/tasks_of_overdue', tasks_of_overdue),
     path('subtasks/', SubTaskListCreateView.as_view()),
     path('subtasks/<int:subtask_id>', SubTaskDetailUpdateDeleteView.as_view()),
+    path('', include(router.urls)),
 
 ]

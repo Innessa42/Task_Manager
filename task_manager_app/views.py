@@ -4,16 +4,16 @@ from django.db.models.aggregates import Count
 from django.db.models import Count, QuerySet
 from django.db.models.functions import ExtractWeekDay
 from django.http import HttpResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
-from task_manager_app.models import Task, SubTask
+from task_manager_app.models import Task, SubTask, Category
 from task_manager_app.serializers import TaskCreateSerializer, TaskListSerialize, TaskStatusCountSerializer, \
-    SubTaskCreateSerializer, SubTaskSerializer, TaskDetailSerializer
+    SubTaskCreateSerializer, SubTaskSerializer, TaskDetailSerializer, CategoryCreateSerializer
 from rest_framework import status, filters
 from django.utils import timezone
 from rest_framework.views import APIView
@@ -342,7 +342,33 @@ class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
 #            status=status.HTTP_202_ACCEPTED
 #        )
 #
+class CategoryViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategoryCreateSerializer
 
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='statistic'
+    )
+    def get_task_count_by_category(self, request: Request) -> Response:
+        category_statistic = Category.objects.annotate(
+            count_tasks=Count('task')
+        )
+
+        data = [
+            {
+                "id": c.id,
+                "name": c.name,
+                "count_tasks": c.count_tasks,
+            }
+            for c in category_statistic
+        ]
+
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK
+        )
 
 
 

@@ -1,8 +1,24 @@
 from django.db import models
+
+from managers.category import SoftDeleteManager
+from django.utils import timezone
+
 #
 # Create your models here.
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+
+    def delete(self, *arg, **kwargs):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+
+        self.save()
+
+
     class Meta:
         db_table = "task_manager_category"
         verbose_name = "Category"

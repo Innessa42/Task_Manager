@@ -60,9 +60,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'task_manager_app.middleware.jwt_helper.JWTAuthenticationMiddleware'
+
 ]
 
 ROOT_URLCONF = 'task_manager_proj.urls'
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend",
+#EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+#EMAIL_HOST = "localhost"
+#EMAIL_PORT = 1025
+
 
 TEMPLATES = [
     {

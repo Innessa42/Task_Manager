@@ -19,7 +19,7 @@ from django.urls import path, include
 from task_manager_app.views import user_hallo, tasks_count, \
     tasks_count_by_status, tasks_of_overdue, SubTaskDetailUpdateDeleteView, \
     TaskListCreateView, TaskDetailUpdateDeleteView, SubTaskListCreateView, CategoryViewSet, UserTasksListGenericView, \
-    UserSubTasksListGenericView
+    UserSubTasksListGenericView, LogInAPIView, LogOutAPIView, RegisterUserAPIView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from drf_yasg import openapi
@@ -62,4 +62,7 @@ urlpatterns = [
     path('token_refresh/', TokenRefreshView.as_view()),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
+    path('auth-login/', LogInAPIView.as_view()),
+    path('auth-logout/', LogOutAPIView.as_view()),
+    path('auth-register/', RegisterUserAPIView.as_view()),
 ]
